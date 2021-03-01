@@ -71,6 +71,17 @@ void createDirectory(){
 
 }
 
+int getRandomRoom(){
+	while(1){
+		int r = rand()%10;
+		if(room_flag[r]==0){
+			room_flag[r]=1;
+			return r;
+		}
+	}
+}
+
+
 // Returns true if all rooms have 3 to 6 outbound connections, false otherwise
 bool IsGraphFull(struct room* roomArray)  
 {
@@ -100,7 +111,6 @@ bool CanAddConnectionFrom(int x, struct room* roomArray)
 bool ConnectionAlreadyExists(int x, int y, struct room* roomArray)
 {
 	int i = 0;
-	if(x == y) return true;
 	for(i = 0; i < 6; i++){
 		if(roomArray[x].connectionsarray[i] == roomArray[y].id) return true;
 	}
@@ -205,7 +215,7 @@ void createRoomFiles(struct room* roomArray)
 	//printf("START: %s\n", roomArray[start].name);
 	//printf("END: %s\n", roomArray[end].name);
 
-	int i = 0; int j = 0;
+	int i = 0; int j = 0; int flag = 0;
 	for(i = 0; i<7; i++){
 		FILE *fp;
 		char file_name[32];
@@ -217,15 +227,16 @@ void createRoomFiles(struct room* roomArray)
 
 		fp = fopen(file_name,"w");
 		fprintf(fp,"ROOM NAME: %s\n", roomArray[i].name);
-		printf("ROOM NAME: %s\n", roomArray[i].name);
-		printf("Num Connections: %d\n",  roomArray[i].num_connections);
-
+		//printf("crf ROOM NAME: %s\n", roomArray[i].name);
 		
 		for(j = 0; j<6; j++){
-			int flag = roomArray[i].connectionsarray[j];
+
+			flag = roomArray[i].connectionsarray[j];
+			//printf("Room Name: %s Flag: %d\n\n", roomArray[i].name, flag);
+			//printf("Flag: %d\n", flag);
 			if(-1 < flag){
-				fprintf(fp,"CONNECTION %d: %s\n", j, roomArray[j].name);	
-				printf("CONNECTION %d: %s\n", j, roomArray[j].name);
+				fprintf(fp,"CONNECTION %d: %s\n", flag, roomArray[flag].name);	
+				//printf("CONNECTION %d: %s\n", flag, roomArray[flag].name);
 			}
 		}
 
@@ -248,21 +259,9 @@ void createRoomFiles(struct room* roomArray)
 void main(){
 	srand (time(0)); //seed for rand() to get a random number everytime the program runs
 	struct room* roomArray = (struct room*)malloc(sizeof(struct room)*7);
-
-
 	createDirectory();
 	CreateRooms2(roomArray);
-	int i = 0; int j = 0;
-	for(i = 0; i < 7; i++){
-		printf("Room %d: %s\n", i, roomArray[i]);
-		for(j = 0; j<6; j++){
-			int flag = roomArray[i].connectionsarray[j];
-			if(-1 < flag){
-				printf("CONNECTION %d: %s\n", j, roomArray[j].name);
-			}
-		}
-	}
 	createRoomFiles(roomArray);
-
 	free(roomArray);
+	//return 0;
 }
