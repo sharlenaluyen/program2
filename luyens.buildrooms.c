@@ -235,7 +235,7 @@ void createRoomFiles(struct room* roomArray)
 			//printf("Room Name: %s Flag: %d\n\n", roomArray[i].name, flag);
 			//printf("Flag: %d\n", flag);
 			if(-1 < flag){
-				fprintf(fp,"CONNECTION %d: %s\n", flag, roomArray[flag].name);	
+				fprintf(fp,"CONNECTION %d: %s\n", j, roomArray[flag].name);	
 				//printf("CONNECTION %d: %s\n", flag, roomArray[flag].name);
 			}
 		}
@@ -263,5 +263,5 @@ void main(){
 	CreateRooms2(roomArray);
 	createRoomFiles(roomArray);
 	free(roomArray);
-	//return 0;
+	return 0;
 }
