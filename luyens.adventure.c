@@ -8,14 +8,6 @@
 #include <time.h>
 #include <stdbool.h>
 
-/**************************************************
-* Type: Function
-* Parameters: 
-* Returns: 
-* Purpose: 
-* 
-****************************************************/
-
 char* dName[100]; //serves as directory name
 int START = 0;
 int END = 0;
@@ -38,7 +30,6 @@ struct room{
 * to -1 to signify that there is NOT connection there.
 * id is set to the place in the roomArray.
 ****************************************************/
-
 void initializeRooms(struct room* roomArray){    
     int i = 0; int j = 0;
     for(i = 0 ; i < 7; i++){
@@ -50,7 +41,6 @@ void initializeRooms(struct room* roomArray){
         roomArray[i].num_connections = 0;
         roomArray[i].canconnect = 1;
         roomArray[i].id = i;
-
     }
 }
 
@@ -167,29 +157,18 @@ void readRoomConnections(char* filename, char* newestDirName, struct room* roomA
   	strcat(fname, filename);
     /*  open the file for reading */
     fptr = fopen(fname, "r");
-    if (fptr != NULL)
-    {    
+    if (fptr != NULL){    
     	fscanf(fptr, "ROOM NAME: %s\n", c);
-    	printf("rRC Room Name: %s\n", c);
     	char room_last[16];
         memset(room_last, '\0', 16);
-    	while (!feof(fptr))
-    	{
+    	while (!feof(fptr)){
     		char room[16];
     		int n;
             fgets(buffer, 100, fptr);                                                                                                               ;
     		if(sscanf(buffer, "CONNECTION %d: %s\n", &n, room) == 0) break;
-            //printf("***Room: %s \t Room Last: %s\n", room, room_last);
-    		//(strcmp(room,room_last) == 0 && (getRoomIndex(c, roomArray) == roomArray[getRoomIndex(c, roomArray)].id)){
-                //printf("Is this equal? %d \t %d\n", getRoomIndex(c, roomArray), roomArray[getRoomIndex(c, roomArray)].id);
-                //printf("I'M IN ** Room: %s \t Room Last: %s\n", room, room_last);
     			strcpy(room_last, room);
-    			printf("rRC Room Connection: %s\n", room);
-                int flag = roomArray[getRoomIndex(c, roomArray)].num_connections;
+    			int flag = roomArray[getRoomIndex(c, roomArray)].num_connections;
     			roomArray[getRoomIndex(c, roomArray)].connectionsarray[flag] = getRoomIndex(room, roomArray);
-                printf("rRC Room Index: %d\n", getRoomIndex(c, roomArray));
-                printf("rRC Unsure: %d\n\n", roomArray[getRoomIndex(c, roomArray)].num_connections);
-                printf("rRC what is this? %s\n", c);
     			roomArray[getRoomIndex(c, roomArray)].num_connections++;
 		}
 		char type[20];
@@ -211,43 +190,52 @@ void readRoomConnections(char* filename, char* newestDirName, struct room* roomA
     fclose(fptr);
 }
 
-
+/**************************************************
+* Type: Function
+* Parameters: char*, newestDirName
+              struct room*, roomArray
+* Returns: N/A
+* Purpose: reads the room files that were created
+* from buildrooms. First, opens directory. Then, to
+* skip past the current and parent directories.
+****************************************************/
 void readFiles(char* newestDirName, struct room* roomArray){
     DIR *d;
     int i = 0;
     struct dirent *dir;
     d = opendir(newestDirName);
-    if (d)
-    {
-        while ((dir = readdir(d)) != NULL)
-        {
+    if (d){
+        while ((dir = readdir(d)) != NULL){
             if(strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0){
 			 //printf(" readFiles Name: %s\n", dir->d_name);
 
              readRoomFile(i, dir->d_name, newestDirName, roomArray);
              i++;
-         }
+            }
             
         }
         closedir(d);
     }
 
     d = opendir(newestDirName);
-    if (d)
-    {
-        while ((dir = readdir(d)) != NULL)
-        {
-            //dir->d_name;
-            //printf("", dir->d_name);
+    if (d){
+        while ((dir = readdir(d)) != NULL){
             if(strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0){
             readRoomConnections(dir->d_name, newestDirName, roomArray);
-        }
+            }
         }
         closedir(d);
     }
 }
 
-
+/**************************************************
+* Type: Function
+* Parameters: struct room*, roomArray
+* Returns: N/A
+* Purpose: Goes through roomArray to print its contents
+* including the name, number of connections, type of room,
+* and the contents of the connectionsarray.
+****************************************************/
 void printRooms(struct room* roomArray){
     int j = 0; int i = 0;
 	for(i = 0; i<7; i++){
@@ -260,7 +248,14 @@ void printRooms(struct room* roomArray){
 	} 
 }
 
-
+/**************************************************
+* Type: Function
+* Parameters: int, CURRENT,
+              struct room*, roomArray
+* Returns: N/A
+* Purpose: Goes through roomArray to print a specified
+* room's connections. 
+****************************************************/
 void printConnections(int CURRENT, struct room* roomArray){
 	int n = roomArray[CURRENT].num_connections;
     int i = 0;
@@ -272,6 +267,12 @@ void printConnections(int CURRENT, struct room* roomArray){
 	}
 }
 
+/**************************************************
+* Type: Function
+* Parameters: N/A
+* Returns: N/A
+* Purpose: gets time and prints it! 
+****************************************************/
 void printTime(){
 	time_t t ; 
     struct tm *tmp ; 
@@ -285,6 +286,13 @@ void printTime(){
     fclose(fp);
 }
 
+/**************************************************
+* Type: Function
+* Parameters: struct room*, roomArray
+* Returns: N/A
+* Purpose: Specified TYPEs in roomArray to initialize
+* START and END variables.  
+****************************************************/
 void getStartandEndRooms(struct room* roomArray){
     int i = 0;
     for(i = 0; i<7; i++){
@@ -293,6 +301,13 @@ void getStartandEndRooms(struct room* roomArray){
     }
 }
 
+/**************************************************
+* Type: Function
+* Parameters: struct room*, roomArray
+* Returns: N/A
+* Purpose: runs the game!
+* 
+****************************************************/
 void runGame(struct room* roomArray){
 
 	int CURRENT = START;
@@ -308,7 +323,7 @@ void runGame(struct room* roomArray){
 		printConnections(CURRENT, roomArray);
 		printf("WHERE TO? >");
 		fgets(next, 16, stdin); //the "enter" sends a newline character as well!!!
-        next[strcspn(next, "\n")] = 0;
+        next[strcspn(next, "\n")] = 0; //so we have to take it out so the input gets processed properly
 
 
 		printf("\n");
@@ -334,20 +349,19 @@ void runGame(struct room* roomArray){
 	}
 }
 
-int main()
-{
-	struct room* roomArray = (struct room*)malloc(sizeof(struct room)*7);
+int main(){
+	struct room* roomArray = (struct room*)malloc(sizeof(struct room)*7); //allocates memory for roomArray
     initializeRooms(roomArray);
 
     char newestDirName[256]; // Holds the name of the newest dir that contains prefix
-	getMostRecentDirectory(newestDirName);
-    printf("Newest entry found is: %s\n", newestDirName);
+	getMostRecentDirectory(newestDirName); //gets the newest directory
+    //printf("Newest entry found is: %s\n", newestDirName);
 
-    readFiles(newestDirName, roomArray);
-    printRooms(roomArray);
-    //printf("******************************************");
-    runGame(roomArray);
-    free(roomArray);
+    readFiles(newestDirName, roomArray); //reads files!!
+    //printRooms(roomArray);
+
+    runGame(roomArray); //runs game!!
+    free(roomArray); //frees memory for roomArray
 
     return 0;
 }
