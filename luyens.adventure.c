@@ -8,7 +8,15 @@
 #include <time.h>
 #include <stdbool.h>
 
-char* dName[100];
+/**************************************************
+* Type: Function
+* Parameters: 
+* Returns: 
+* Purpose: 
+* 
+****************************************************/
+
+char* dName[100]; //serves as directory name
 int START = 0;
 int END = 0;
 
@@ -18,9 +26,42 @@ struct room{
     int connectionsarray[6]; //6 elements for max connections
     int num_connections;
     bool canconnect;
-    int id;
+    int id; //id is used for placement in roomArray in adventures
 };
 
+/**************************************************
+* Type: Function
+* Parameters: roomArray
+* Returns: N/A
+* Purpose: Manipulates roomArray struct to be empty 
+* and ready to be filled. connectionsarray initialized 
+* to -1 to signify that there is NOT connection there.
+* id is set to the place in the roomArray.
+****************************************************/
+
+void initializeRooms(struct room* roomArray){    
+    int i = 0; int j = 0;
+    for(i = 0 ; i < 7; i++){
+        memset(roomArray[i].name, '\0', 10);
+        roomArray[i].TYPE = 0;
+        for(j = 0; j < 6; j++){
+            roomArray[i].connectionsarray[j] = -1;
+        }
+        roomArray[i].num_connections = 0;
+        roomArray[i].canconnect = 1;
+        roomArray[i].id = i;
+
+    }
+}
+
+/**************************************************
+* Type: Function
+* Parameters: newestDirName
+* Returns: N/A
+* Purpose: Taken from slides. Takes timestamp to
+* determine the newest directory made so that it's 
+* the most fresh build/compilation from buildrooms. 
+****************************************************/
 void getMostRecentDirectory(char* newestDirName){
 
     int newestDirTime = -1; // Modified timestamp of newest subdir examined
@@ -54,6 +95,14 @@ void getMostRecentDirectory(char* newestDirName){
 
 int i = 0;
 
+
+/**************************************************
+* Type: Function
+* Parameters: char*, room_name; struct room*, roomArray
+* Returns: int; returns index of specified room
+* Purpose: Goes through roomArray using a room name
+* to find the index of the room. 
+****************************************************/
 int getRoomIndex(char* room_name, struct room* roomArray){
     int i = 0;
 	for (i = 0; i<7; i++){
@@ -65,6 +114,16 @@ int getRoomIndex(char* room_name, struct room* roomArray){
 	return -1;
 }
 
+/**************************************************
+* Type: Function
+* Parameters: int; current room
+              char *, file name
+              char*, newestDirName
+              struct room*, roomArray
+* Returns: N/A
+* Purpose: Reads a file created from buildrooms.
+* Inserts room names into roomArray. 
+****************************************************/
 void readRoomFile(int CURRENT, char* filename, char* newestDirName, struct room* roomArray){
 	FILE *fptr;
     char ch;
@@ -79,18 +138,30 @@ void readRoomFile(int CURRENT, char* filename, char* newestDirName, struct room*
     if (fptr != NULL)
     {    
     	fscanf(fptr, "ROOM NAME: %s\n", c);
-    	printf("readRoomFile %d Room Name: %s\n", CURRENT, c);
+    	//printf("readRoomFile %d Room Name: %s\n", CURRENT, c);
     	strcpy(roomArray[CURRENT++].name, c);
 	}
     fclose(fptr); CURRENT++;
 }
 
-
+/**************************************************
+* Type: Function
+* Parameters: char*, filename
+              char*, newestDirName
+              struct room*, roomArray
+* Returns: N/A
+* Purpose: Reads the file to fill out the pieces 
+* of each room in roomArray. First, we open the file.
+* Then, we use fscanf to read line by line. Then, we
+* use sscanf to pattern match the strings into the proper
+* elements of rooms. 
+****************************************************/
 void readRoomConnections(char* filename, char* newestDirName, struct room* roomArray){
 	FILE *fptr;
     char ch;
     char c[1000];
     char fname[300];
+    char buffer[100];
     strcpy(fname, newestDirName);
     strcat(fname, "/");
   	strcat(fname, filename);
@@ -105,25 +176,25 @@ void readRoomConnections(char* filename, char* newestDirName, struct room* roomA
     	while (!feof(fptr))
     	{
     		char room[16];
-    		int* n;
-    		fscanf(fptr, "CONNECTION %d: %s\n", &n, room);
-    		if(strcmp(room,room_last)==0) break;
-    		else {
+    		int n;
+            fgets(buffer, 100, fptr);                                                                                                               ;
+    		if(sscanf(buffer, "CONNECTION %d: %s\n", &n, room) == 0) break;
+            //printf("***Room: %s \t Room Last: %s\n", room, room_last);
+    		//(strcmp(room,room_last) == 0 && (getRoomIndex(c, roomArray) == roomArray[getRoomIndex(c, roomArray)].id)){
+                //printf("Is this equal? %d \t %d\n", getRoomIndex(c, roomArray), roomArray[getRoomIndex(c, roomArray)].id);
+                //printf("I'M IN ** Room: %s \t Room Last: %s\n", room, room_last);
     			strcpy(room_last, room);
     			printf("rRC Room Connection: %s\n", room);
-    			//roomArray[getRoomIndex(c, roomArray)].connectionsarray[getRoomIndex(room, roomArray)]= 1;
+                int flag = roomArray[getRoomIndex(c, roomArray)].num_connections;
+    			roomArray[getRoomIndex(c, roomArray)].connectionsarray[flag] = getRoomIndex(room, roomArray);
                 printf("rRC Room Index: %d\n", getRoomIndex(c, roomArray));
                 printf("rRC Unsure: %d\n\n", roomArray[getRoomIndex(c, roomArray)].num_connections);
-
                 printf("rRC what is this? %s\n", c);
     			roomArray[getRoomIndex(c, roomArray)].num_connections++;
-
-    		}
-
 		}
 		char type[20];
-		fscanf(fptr, "ROOM TYPE: %s\n",type);
-        printf("ROOM TYPE: %s\n",type);
+		sscanf(buffer, "ROOM TYPE: %s\n",type);
+        //printf("ROOM TYPE: %s\n",type);
 
 
 		if(strcmp(type, "START_ROOM")==0) {
@@ -151,10 +222,9 @@ void readFiles(char* newestDirName, struct room* roomArray){
         while ((dir = readdir(d)) != NULL)
         {
             if(strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0){
-			 printf(" readFiles Name: %s\n", dir->d_name);
+			 //printf(" readFiles Name: %s\n", dir->d_name);
 
              readRoomFile(i, dir->d_name, newestDirName, roomArray);
-             readRoomConnections(dir->d_name, newestDirName, roomArray);
              i++;
          }
             
@@ -162,27 +232,31 @@ void readFiles(char* newestDirName, struct room* roomArray){
         closedir(d);
     }
 
-/*    d = opendir(newestDirName);
+    d = opendir(newestDirName);
     if (d)
     {
         while ((dir = readdir(d)) != NULL)
         {
-            dir->d_name;
-            printf("", dir->d_name);
-            readRoomConnections(dir->d_name);
+            //dir->d_name;
+            //printf("", dir->d_name);
+            if(strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0){
+            readRoomConnections(dir->d_name, newestDirName, roomArray);
+        }
         }
         closedir(d);
-    }*/
+    }
 }
 
 
 void printRooms(struct room* roomArray){
     int j = 0; int i = 0;
 	for(i = 0; i<7; i++){
-		printf("%s %d  %d   ", roomArray[i].name, roomArray[i].num_connections, roomArray[i].TYPE);
+		printf("%s\t%d\t%d   ", roomArray[i].name, roomArray[i].num_connections, roomArray[i].TYPE);
 
-		for(j = 0; j<7; j++) printf("%d", roomArray[i].connectionsarray[j]);
-		printf("\n");
+		for(j = 0; j<6; j++) {
+            printf("%d", roomArray[i].connectionsarray[j]);
+        }
+    printf("\n");
 	} 
 }
 
@@ -190,14 +264,12 @@ void printRooms(struct room* roomArray){
 void printConnections(int CURRENT, struct room* roomArray){
 	int n = roomArray[CURRENT].num_connections;
     int i = 0;
-	for(i = 0; i<7;i++){
-		if(roomArray[CURRENT].connectionsarray[i]==1){
-			if(n!=1) printf("%s, ",roomArray[i].name);
-			else printf("%s.\n",roomArray[i].name);
-			n--;
-		}
+    int total = n-1;
+	for(i = 0; i<n;i++){
+            int temp = roomArray[CURRENT].connectionsarray[i];
+            if(i == total) {printf("%s.\n",roomArray[temp].name); break;}
+			printf("%s, ", roomArray[temp].name);
 	}
-    i = 0;
 }
 
 void printTime(){
@@ -206,34 +278,46 @@ void printTime(){
     char MY_TIME[80]; 
     time( &t ); 
     tmp = localtime( &t );
-		//1:03pm, Tuesday, September 13, 2016
     strftime(MY_TIME, sizeof(MY_TIME), "%I:%M%p, %A, %B %d, %Y", tmp); 
     printf("%s\n\n", MY_TIME ); 
     FILE* fp = fopen("currentTime.txt", "w");
     fprintf(fp, "%s", MY_TIME);
     fclose(fp);
+}
 
+void getStartandEndRooms(struct room* roomArray){
+    int i = 0;
+    for(i = 0; i<7; i++){
+        if(roomArray[i].TYPE == 1) START = i;
+        if(roomArray[i].TYPE == 2) END = i;
+    }
 }
 
 void runGame(struct room* roomArray){
+
 	int CURRENT = START;
 	char next[16];
 	int steps = 0;
 	int locs[100];
+   // char buffer[100];
 	int i = 0;
 	while(1){
-		printf("CURRENT LOCATION: %s\n",roomArray[CURRENT].name);
+		printf("CURRENT LOCATION: %s\n", roomArray[CURRENT].name);
 		printf("POSSIBLE CONNECTIONS: ");
+        //printf("CURRENT: %d\n", CURRENT);
 		printConnections(CURRENT, roomArray);
 		printf("WHERE TO? >");
-		scanf("%s", &next);
+		fgets(next, 16, stdin); //the "enter" sends a newline character as well!!!
+        next[strcspn(next, "\n")] = 0;
+
+
 		printf("\n");
 		if(strcmp(next, "time")==0) {
 			printTime();
 			continue;
 		}
 		int n = getRoomIndex(next, roomArray);
-		if(n == -1 || roomArray[CURRENT].connectionsarray[n] == 0){
+		if(n == -1){
 			printf("HUH? I DON'T UNDERSTAND THAT ROOM. TRY AGAIN.\n\n");
 		}else{
 			CURRENT = n;
@@ -253,13 +337,15 @@ void runGame(struct room* roomArray){
 int main()
 {
 	struct room* roomArray = (struct room*)malloc(sizeof(struct room)*7);
+    initializeRooms(roomArray);
+
     char newestDirName[256]; // Holds the name of the newest dir that contains prefix
 	getMostRecentDirectory(newestDirName);
     printf("Newest entry found is: %s\n", newestDirName);
 
     readFiles(newestDirName, roomArray);
     printRooms(roomArray);
-    printf("******************************************");
+    //printf("******************************************");
     runGame(roomArray);
     free(roomArray);
 
