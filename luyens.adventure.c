@@ -7,10 +7,13 @@
 #include <dirent.h>
 #include <time.h>
 #include <stdbool.h>
+#include <pthread.h>
 
 char* dName[100]; //serves as directory name
 int START = 0;
 int END = 0;
+
+pthread_mutex_t myMutex = PTHREAD_MUTEX_INITIALIZER; //global mutex
 
 struct room{
     char name[10];
@@ -271,20 +274,40 @@ void printConnections(int CURRENT, struct room* roomArray){
 * Type: Function
 * Parameters: N/A
 * Returns: N/A
-* Purpose: gets time and prints it! 
+* Purpose: gets time and prints and writes to txt file.
 ****************************************************/
-void printTime(){
-	time_t t ; 
-    struct tm *tmp ; 
+void* timePrintWrite(){
+    pthread_mutex_lock(&myMutex); //lock mutex so that the program waits until mutex can unlock when we want this function to run
+
+    time_t t; 
+    struct tm *tmp; 
     char MY_TIME[80]; 
     time( &t ); 
     tmp = localtime( &t );
-    strftime(MY_TIME, sizeof(MY_TIME), "%I:%M%p, %A, %B %d, %Y", tmp); 
-    printf("%s\n\n", MY_TIME ); 
     FILE* fp = fopen("currentTime.txt", "w");
+    strftime(MY_TIME, sizeof(MY_TIME), "%I:%M%p, %A, %B %d, %Y", tmp); 
     fprintf(fp, "%s", MY_TIME);
     fclose(fp);
+
+    pthread_mutex_unlock(&myMutex); //give lock back to main thread
 }
+
+
+/**************************************************
+* Type: Function
+* Parameters: N/A
+* Returns: N/A
+* Purpose: opens previously saved txt file to print
+* the time to the screen. Separated due to mutex.
+****************************************************/
+void printTime(){
+    char buffer[100];
+    FILE* fp = fopen("currentTime.txt", "r");
+    fgets(buffer, 100, fp); //captures whatever is in currentTime.txt
+    printf("%s\n\n", buffer);
+    fclose(fp);
+}
+
 
 /**************************************************
 * Type: Function
@@ -308,7 +331,7 @@ void getStartandEndRooms(struct room* roomArray){
 * Purpose: runs the game!
 * 
 ****************************************************/
-void runGame(struct room* roomArray){
+void runGame(struct room* roomArray, pthread_t myThreadID){
 
 	int CURRENT = START;
 	char next[16];
@@ -328,6 +351,11 @@ void runGame(struct room* roomArray){
 
 		printf("\n");
 		if(strcmp(next, "time")==0) {
+
+            pthread_mutex_unlock(&myMutex); //unlock, then wait main thread to finished; when finished, we've successfully written to time file
+            pthread_join(myThreadID, NULL); // block main thread until other thread finishes
+            pthread_mutex_lock(&myMutex); 
+
 			printTime();
 			continue;
 		}
@@ -350,6 +378,13 @@ void runGame(struct room* roomArray){
 }
 
 int main(){
+    pthread_mutex_lock(&myMutex); //lock mutex
+
+    int resultInt;
+    pthread_t myThreadID;
+    resultInt = pthread_create( &myThreadID, NULL, timePrintWrite, NULL); 
+    //start_routine is a function; this is the start point of new thread
+
 	struct room* roomArray = (struct room*)malloc(sizeof(struct room)*7); //allocates memory for roomArray
     initializeRooms(roomArray);
 
@@ -360,7 +395,7 @@ int main(){
     readFiles(newestDirName, roomArray); //reads files!!
     //printRooms(roomArray);
 
-    runGame(roomArray); //runs game!!
+    runGame(roomArray, myThreadID); //runs game!!
     free(roomArray); //frees memory for roomArray
 
     return 0;
