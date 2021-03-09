@@ -41,14 +41,14 @@ char directory[64] = "luyens.rooms.";
 int room_flag[9] = {0};
 int total_connections = 0;
 
-
-const char *rooms[] = {"CROWTHER",
-					   "DUNGEON",
+//all room options that we can have rooms from
+const char *rooms[] = {"Crowther",
+					   "Dungeon",
 					   "PLUGH",
-					   "PLOWER",
+					   "PLOVER",
 					   "twisty",
 					   "XYZZY",
-					   "ZORK",
+					   "Zork",
 					   "DRAGON",
 					   "FIRE",
 					   "SHADOW"
